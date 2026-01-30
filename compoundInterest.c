@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
+#include <ctype.h>
 
 #define RATE_SCALE 100
 
@@ -41,8 +42,16 @@ bool parseFrequency(const char *freq, frequency_t *out, const char *purpose)    
     if(!freq || !out)   {
         return false;
     }
-    char frequency[9];
-    memcpy(frequency, freq, 9); //
+    char frequency[9] = {0};
+    size_t len = strlen(freq);
+    if (len > 8)    {
+        len = 8;
+    }
+    memcpy(frequency, freq, len);
+    frequency[len] = '\0';
+    for(int i=0; i<8; i++)  {
+        frequency[i] = toLower(frequency[i]);
+    }
     if(strcmp(frequency, "yearly") == 0)  {
         *out = yearly;
         return true;
@@ -133,9 +142,13 @@ int main(int argc, char *argv[])   {
         return EXIT_FAILURE;
     }
 
-    uint64_t ratePerPeriodScaled = RATE_SCALE + (I.interestRate2Decimals/I.compoundFreq);
+    uint64_t ratePerPeriodScaled = RATE_SCALE + I.interestRate2Decimals;
     uint64_t totalPeriods = I.compoundFreq * I.investmentYears;
     uint64_t growthMultiplierScaled = scaledPow(ratePerPeriodScaled, totalPeriods);
+    if(growthMultiplierScaled == 0) {
+        printf("scaledPow() returned 0, due to either division by 0 or overflow error\n");
+        return EXIT_FAILURE;
+    }
     uint64_t finalAmountCents = (I.principalInCents*growthMultiplierScaled) / RATE_SCALE;
 
     printf("Final amount: %" PRIu64 ".%02" PRIu64 "\n", finalAmountCents/100, finalAmountCents%100);
