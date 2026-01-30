@@ -42,7 +42,7 @@ bool parseFrequency(const char *freq, frequency_t *out, const char *purpose)    
         return false;
     }
     char frequency[9];
-    memcpy(freq, frequency, 9); //
+    memcpy(frequency, freq, 9); //
     if(strcmp(frequency, "yearly") == 0)  {
         *out = yearly;
         return true;
@@ -83,10 +83,6 @@ bool parseLength(const char *input, uint32_t *out, const char *purpose) {
     uint32_t length = 0;
     if(sscanf(input, "%"SCNu32, &length) < 1)   {
         printf("couldn't parse %s\n", purpose);
-        return false;
-    }
-    if(length > UINT32_MAX)  {
-        printf("value for %s is too high", purpose);
         return false;
     }
     *out = length;
