@@ -30,7 +30,8 @@ bool parseDollarAmounts(const char *dollarAmount, uint64_t *out, const char *pur
         printf("couldn't parse %s\n", purpose);
         return false;
     }
-    if(cents < 10)      {
+    char *centLen = NULL;
+    if(sscanf(dollarAmount, ".%2s", centLen) == 1 && strlen(centLen) == 1)      {
         cents *= 10;
     }
     dollars *= 100;
@@ -50,7 +51,7 @@ bool parseFrequency(const char *freq, frequency_t *out, const char *purpose)    
     memcpy(frequency, freq, len);
     frequency[len] = '\0';
     for(int i=0; i<8; i++)  {
-        frequency[i] = toLower(frequency[i]);
+        frequency[i] = tolower(frequency[i]);
     }
     if(strcmp(frequency, "yearly") == 0)  {
         *out = yearly;
@@ -151,6 +152,6 @@ int main(int argc, char *argv[])   {
     }
     uint64_t finalAmountCents = (I.principalInCents*growthMultiplierScaled) / RATE_SCALE;
 
-    printf("Final amount: %" PRIu64 ".%02" PRIu64 "\n", finalAmountCents/100, finalAmountCents%100);
+    printf("Final amount: $%" PRIu64 ".%02" PRIu64 "\n", finalAmountCents/100, finalAmountCents%100);
     return EXIT_SUCCESS;
 }
