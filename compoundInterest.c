@@ -29,19 +29,27 @@ bool parseDollarAmounts(const char *dollarAmount, uint64_t *out, const char *pur
         printf("couldn't parse %s\n", purpose);
         return false;
     }
-    short unsigned int cents = 0;
+    if (dollarAmount[0] == '-') {
+        printf("the initial dollar amount cannot be negative\n");
+        return false;
+    }
+    int cents = 0;
     const char *dot = strchr(dollarAmount, '.');
     if (dot != NULL) {
         char centsStr[3];
-        if (sscanf(dot + 1, "%2s", centsStr) == 1) {
+        if (sscanf(dot + 1, "%2[0-9]", centsStr) == 1) { //substring after dot buffer, really cool input
             cents = atoi(centsStr);
-            if (strlen(centsStr) == 1) {
+            if (centsStr[0] != '0' && cents < 10) {
                 cents *= 10;
             }
         }
     }
     if (dollars > (UINT64_MAX - cents) / 100) {
         printf("dollar amount for %s is too large\n", purpose);
+        return false;
+    }
+    if (dollars > (999999999)) {
+        printf("keep the principal investment below one billion please");
         return false;
     }
     *out = dollars * 100 + cents;
@@ -58,8 +66,8 @@ bool parseFrequency(const char *freq, frequency_t *out, const char *purpose) {
     }
     memcpy(frequency, freq, len);
     frequency[len] = '\0'; //is this necessary?
-    for (int i=0; i<8; i++) {
-        frequency[i] = tolower(frequency[i]);
+    for (size_t i=0; i<len; i++) {
+        frequency[i] = (char)tolower((unsigned char)frequency[i]);
     }
     if (strcmp(frequency, "yearly") == 0) {
         *out = yearly;
@@ -81,34 +89,50 @@ bool parseInterestRate(const char *rate, uint64_t *out, const char *purpose) {
         printf("couldn't parse %s\n", purpose);
         return false;
     }
-    short unsigned int postDecimal = 0;
+        if (rate[0] == '-') {
+        printf("the interest rate cannot be negative\n");
+        return false;
+    }
+    int postDecimal = 0;
     const char *dot = strchr(rate, '.');
     if (dot != NULL) {
         char postStr[3];
-        if (sscanf(dot + 1, "%2s", postStr) == 1) {
+        if (sscanf(dot + 1, "%2[0-9]", postStr) == 1) {
             postDecimal = atoi(postStr);
-            if (strlen(postStr) == 1) {
+            if (postStr[0] != '0' && postDecimal < 10) {
                 postDecimal *= 10;
             }
         }
     }
     if (preDecimal > (UINT64_MAX - 99) / 100) {
-        printf("predecimal value for %s is too high", purpose);
+        printf("predecimal value for %s is too high\n", purpose);
+        return false;
+    }
+    if (preDecimal > 50) {
+        printf("please keep the interest rate below 50%%");
         return false;
     }
     *out = preDecimal * 100 + postDecimal;
     return true;
 }
 bool parseYears(const char *input, uint32_t *out, const char *purpose) {
-    if(!input || !out) {
+    if (!input || !out) {
         return false;
     }
-    uint32_t length = 0;
-    if(sscanf(input, "%"SCNu32, &length) < 1) {
+    uint32_t years = 0;
+    if (sscanf(input, "%"SCNu32, &years) < 1) {
         printf("couldn't parse %s\n", purpose);
         return false;
     }
-    *out = length;
+    if (input[0] == '-') {
+        printf("years cannot be negative");
+        return false;
+    }
+    if (years > 200) {
+        printf("keep the years below 200 please");
+        return false;
+    }
+    *out = years;
     return true;
 }
 
